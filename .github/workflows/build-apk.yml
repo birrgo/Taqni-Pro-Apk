@@ -63,11 +63,10 @@ jobs:
           sed -i 's/targetSdkVersion .*/targetSdkVersion 36/' android/app/build.gradle
           sed -i 's/compileSdkVersion .*/compileSdkVersion 36/' android/app/build.gradle
 
-      - name: Set App Version Code
+      - name: Set App Version Code Dynamically
         run: |
-          # Bumping version code to 3 for the new Google Play release
-          sed -i -E 's/versionCode [0-9]+/versionCode 3/' android/app/build.gradle
-          sed -i -E 's/versionName "[^"]+"/versionName "1.0.3"/' android/app/build.gradle
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i -E "s/versionName \"[^\"]+\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
 
       - name: Fix Android Hardware Back Button
         run: |
@@ -122,7 +121,7 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.jks
 
-      - name: Configure Signing in Gradle
+      - name: Configure Signing & Shrinking in Gradle
         run: |
           cat << 'EOF' >> android/app/build.gradle
 
@@ -138,7 +137,8 @@ jobs:
               buildTypes {
                   release {
                       signingConfig signingConfigs.release
-                      minifyEnabled false
+                      minifyEnabled true
+                      shrinkResources true
                       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
